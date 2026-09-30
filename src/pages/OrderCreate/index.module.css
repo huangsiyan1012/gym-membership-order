@@ -1,0 +1,12 @@
+.form {
+  max-width: 720px;
+}
+
+.inputNumber {
+  width: 100%;
+}
+
+.actions {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
