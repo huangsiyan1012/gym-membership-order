@@ -6,6 +6,35 @@ import { ORDER_STATUS_TABS } from '@/constants/order'
 const DEFAULT_PAGE_SIZE = 10
 
 /**
+ * 根据页面状态生成列表请求参数。
+ *
+ * 查询 Hook 和 CSV 导出共用该函数，确保列表与导出使用完全相同的 Tab 和搜索条件。
+ */
+export function buildOrderListParams({ activeTab, filters = {}, page = 1, pageSize = 10 }) {
+  const activeTabConfig = ORDER_STATUS_TABS.find((tab) => tab.key === activeTab)
+  const params = {
+    page,
+    pageSize,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  }
+
+  if (activeTabConfig?.statuses?.length) {
+    params.statuses = activeTabConfig.statuses
+  }
+
+  if (filters.orderNo) {
+    params.orderNo = filters.orderNo
+  }
+
+  if (filters.memberName) {
+    params.memberName = filters.memberName
+  }
+
+  return params
+}
+
+/**
  * 订单列表查询 Hook。
  *
  * 统一维护 Tab、搜索条件、分页、加载状态和查询结果。页面只负责收集交互参数，
@@ -27,31 +56,22 @@ export function useOrderListQuery() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const { orderNo, memberName } = filters
 
   useEffect(() => {
     let isActive = true
     const requestId = requestIdRef.current + 1
-    const activeTabConfig = ORDER_STATUS_TABS.find((tab) => tab.key === activeTab)
-    const params = {
+    const params = buildOrderListParams({
+      activeTab,
+      filters: {
+        orderNo,
+        memberName,
+      },
       page,
       pageSize,
-      sortBy: 'createdAt',
-      sortOrder: 'desc',
-    }
+    })
 
     requestIdRef.current = requestId
-
-    if (activeTabConfig?.statuses?.length) {
-      params.statuses = activeTabConfig.statuses
-    }
-
-    if (filters.orderNo) {
-      params.orderNo = filters.orderNo
-    }
-
-    if (filters.memberName) {
-      params.memberName = filters.memberName
-    }
 
     async function fetchOrders() {
       setLoading(true)
@@ -79,7 +99,7 @@ export function useOrderListQuery() {
     return () => {
       isActive = false
     }
-  }, [activeTab, filters.memberName, filters.orderNo, page, pageSize, refreshToken])
+  }, [activeTab, memberName, orderNo, page, pageSize, refreshToken])
 
   /**
    * 切换状态 Tab。

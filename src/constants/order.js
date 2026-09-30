@@ -39,6 +39,15 @@ export const IN_PROGRESS_ORDER_STATUSES = Object.freeze([
   ORDER_STATUS.PENDING_SHIP,
 ])
 
+// 财务导出白名单：取消订单默认不导出，避免退款或争议数据进入对账文件。
+export const EXPORTABLE_ORDER_STATUSES = Object.freeze([
+  ORDER_STATUS.PENDING_REVIEW,
+  ORDER_STATUS.PENDING_CARD,
+  ORDER_STATUS.PENDING_SHIP,
+  ORDER_STATUS.COMPLETED,
+  ORDER_STATUS.EXPIRED,
+])
+
 /**
  * 列表页状态 Tab 配置。
  *

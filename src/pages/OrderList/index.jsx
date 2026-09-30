@@ -4,9 +4,16 @@ import { useState } from 'react'
 import CancelOrderModal from '@/components/CancelOrderModal'
 import RenewOrderModal from '@/components/RenewOrderModal'
 import StatusTag from '@/components/StatusTag'
+import { getOrderList } from '@/api/order'
 import { ORDER_STATUS, ORDER_STATUS_TABS } from '@/constants/order'
 import { useOrderSelection } from '@/hooks/useOrderSelection'
-import { useOrderListQuery } from '@/hooks/useOrderListQuery'
+import { buildOrderListParams, useOrderListQuery } from '@/hooks/useOrderListQuery'
+import {
+  createOrdersCsv,
+  createOrdersCsvFileName,
+  downloadCsv,
+  filterExportableOrders,
+} from '@/utils/csv'
 import { formatAmount, formatDateTime } from '@/utils/format'
 import { partitionOrdersByStatus } from '@/utils/orderSelection'
 
@@ -65,6 +72,7 @@ function OrderListPage() {
   const [searchForm] = Form.useForm()
   const [renewalOrders, setRenewalOrders] = useState([])
   const [cancellationOrders, setCancellationOrders] = useState([])
+  const [exporting, setExporting] = useState(false)
   const { message } = AntdApp.useApp()
   const {
     selectedOrderNos,
@@ -76,6 +84,7 @@ function OrderListPage() {
   } = useOrderSelection()
   const {
     activeTab,
+    filters,
     page,
     pageSize,
     data,
@@ -176,6 +185,55 @@ function OrderListPage() {
     refresh()
   }
 
+  /**
+   * 导出当前筛选结果或已勾选订单。
+   *
+   * 有勾选时优先导出勾选订单，否则按当前 Tab 和搜索条件查询全部结果。
+   * 已取消订单始终跳过，全部不可导出时不生成空文件。
+   */
+  async function handleExport() {
+    setExporting(true)
+
+    try {
+      let sourceOrders = selectedOrders
+
+      if (selectedOrders.length === 0) {
+        const result = await getOrderList(
+          buildOrderListParams({
+            activeTab,
+            filters,
+            page: 1,
+            pageSize: 100000,
+          }),
+        )
+
+        sourceOrders = result.list
+      }
+
+      const exportableOrders = filterExportableOrders(sourceOrders)
+      const skippedCount = sourceOrders.length - exportableOrders.length
+
+      if (exportableOrders.length === 0) {
+        message.warning('当前没有可导出的订单')
+        return
+      }
+
+      const csvContent = createOrdersCsv(exportableOrders)
+      const fileName = createOrdersCsvFileName()
+
+      downloadCsv(csvContent, fileName)
+      message.success(
+        `已导出 ${exportableOrders.length} 条订单${
+          skippedCount > 0 ? `，跳过 ${skippedCount} 条不可导出订单` : ''
+        }`,
+      )
+    } catch {
+      // 响应拦截器已统一展示查询错误，导出流程到此结束。
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <>
       <Typography.Title level={4}>订单列表</Typography.Title>
@@ -231,6 +289,9 @@ function OrderListPage() {
           </Button>
           <Button disabled={selectedCount === 0} onClick={clearSelection}>
             清空选择
+          </Button>
+          <Button loading={exporting} onClick={handleExport}>
+            导出 CSV
           </Button>
         </Space>
         <span className={styles.selectionCount}>已选择 {selectedCount} 条</span>
