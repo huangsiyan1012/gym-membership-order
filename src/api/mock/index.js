@@ -2,12 +2,7 @@ import MockAdapter from 'axios-mock-adapter'
 
 import { IN_PROGRESS_ORDER_STATUSES } from '@/constants/order'
 
-import {
-  cancelOrders,
-  createOrder,
-  queryOrders,
-  renewOrders,
-} from './orderStore'
+import { cancelOrders, createOrder, queryOrders, renewOrders } from './orderStore'
 
 const SUCCESS_CODE = 0
 const BUSINESS_ERROR_CODE = 400
@@ -42,9 +37,7 @@ function getAuthorizationHeader(config) {
 function hasValidToken(config) {
   const authorization = getAuthorizationHeader(config)
 
-  return (
-    typeof authorization === 'string' && authorization.startsWith('Bearer ')
-  )
+  return typeof authorization === 'string' && authorization.startsWith('Bearer ')
 }
 
 // mock adapter 可能收到字符串或对象请求体，解析失败时返回空对象交给业务校验处理。
@@ -88,6 +81,12 @@ export function setupMockServer(httpClient, { delayResponse = 300 } = {}) {
     onNoMatch: 'passthrough',
   })
 
+  /**
+   * GET /orders
+   *
+   * 查询订单列表。读取 page、pageSize、状态、订单号、会员姓名和排序参数，
+   * 调用内存仓储后返回 { list, total, page, pageSize }。
+   */
   mock.onGet(/\/orders$/).reply((config) => {
     if (!hasValidToken(config)) {
       return [401, { code: 401, message: '登录状态已失效', data: null }]
@@ -106,6 +105,12 @@ export function setupMockServer(httpClient, { delayResponse = 300 } = {}) {
     ]
   })
 
+  /**
+   * POST /orders
+   *
+   * 新建订单。请求体包含会员姓名、手机号、购卡年限和备注；订单号、金额、
+   * 创建时间和初始状态由模拟接口生成。
+   */
   mock.onPost(/\/orders$/).reply((config) => {
     if (!hasValidToken(config)) {
       return [401, { code: 401, message: '登录状态已失效', data: null }]
@@ -118,6 +123,12 @@ export function setupMockServer(httpClient, { delayResponse = 300 } = {}) {
     }
   })
 
+  /**
+   * POST /orders/renew
+   *
+   * 单个或批量续卡。请求体包含 orderNos 和 renewalYears；只有已到期订单
+   * 可以通过校验，成功后年限累加并回到待审核状态。
+   */
   mock.onPost(/\/orders\/renew$/).reply((config) => {
     if (!hasValidToken(config)) {
       return [401, { code: 401, message: '登录状态已失效', data: null }]
@@ -130,6 +141,12 @@ export function setupMockServer(httpClient, { delayResponse = 300 } = {}) {
     }
   })
 
+  /**
+   * POST /orders/cancel
+   *
+   * 单个或批量撤单。请求体包含 orderNos；只有待制卡、待寄卡订单可以通过
+   * 校验，成功后统一更新为已取消。
+   */
   mock.onPost(/\/orders\/cancel$/).reply((config) => {
     if (!hasValidToken(config)) {
       return [401, { code: 401, message: '登录状态已失效', data: null }]
