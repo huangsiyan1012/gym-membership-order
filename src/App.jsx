@@ -3,7 +3,9 @@ import { App as AntdApp, ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
+import { RouterProvider } from 'react-router-dom'
 
+import { router } from '@/router'
 import { registerFeedbackApi } from '@/utils/feedback'
 
 // 在应用启动前设置 dayjs 中文规则，日期组件的周起始日和月份名称才会一致。
@@ -15,19 +17,14 @@ dayjs.locale('zh-cn')
  * axios 拦截器运行在 React 组件树之外，无法直接使用 useApp；通过这里的注册桥接，
  * 请求错误才能使用与当前应用主题、语言一致的 message 提示。
  */
-function AppContent() {
+function FeedbackBridge() {
   const { message } = AntdApp.useApp()
 
   useEffect(() => {
     registerFeedbackApi(message)
   }, [message])
 
-  return (
-    <main className="app-shell">
-      <h1>健身房会员办卡订单管理</h1>
-      <p>项目基础环境已就绪。</p>
-    </main>
-  )
+  return null
 }
 
 /**
@@ -40,7 +37,8 @@ function App() {
   return (
     <ConfigProvider locale={zhCN}>
       <AntdApp>
-        <AppContent />
+        <FeedbackBridge />
+        <RouterProvider router={router} />
       </AntdApp>
     </ConfigProvider>
   )
