@@ -1,6 +1,7 @@
 import { Alert, App as AntdApp, Button, Form, Input, Space, Table, Tabs, Typography } from 'antd'
 import { useState } from 'react'
 
+import CancelOrderModal from '@/components/CancelOrderModal'
 import RenewOrderModal from '@/components/RenewOrderModal'
 import StatusTag from '@/components/StatusTag'
 import { ORDER_STATUS, ORDER_STATUS_TABS } from '@/constants/order'
@@ -63,6 +64,7 @@ const baseColumns = [
 function OrderListPage() {
   const [searchForm] = Form.useForm()
   const [renewalOrders, setRenewalOrders] = useState([])
+  const [cancellationOrders, setCancellationOrders] = useState([])
   const { message } = AntdApp.useApp()
   const {
     selectedOrderNos,
@@ -140,7 +142,7 @@ function OrderListPage() {
   /**
    * 批量撤单前置校验。
    *
-   * M9 只验证选择条件；M11 会在此校验通过后打开二次确认框。
+   * 先验证全部选中订单均可撤单，校验通过后打开二次确认框。
    */
   function handleBatchCancel() {
     const { validOrders, invalidOrders } = partitionOrdersByStatus(selectedOrders, [
@@ -156,7 +158,7 @@ function OrderListPage() {
     }
 
     if (validOrders.length > 0) {
-      message.info(`已校验 ${validOrders.length} 条订单，撤单确认将在 M11 接入`)
+      setCancellationOrders(validOrders)
     }
   }
 
@@ -164,6 +166,13 @@ function OrderListPage() {
   function handleRenewalSuccess(updatedOrders) {
     removeSelection(updatedOrders.map((order) => order.orderNo))
     setRenewalOrders([])
+    refresh()
+  }
+
+  // 撤单成功后清理已处理订单的选择，并刷新当前列表。
+  function handleCancellationSuccess(cancelledOrders) {
+    removeSelection(cancelledOrders.map((order) => order.orderNo))
+    setCancellationOrders([])
     refresh()
   }
 
@@ -256,6 +265,12 @@ function OrderListPage() {
         orders={renewalOrders}
         onCancel={() => setRenewalOrders([])}
         onSuccess={handleRenewalSuccess}
+      />
+      <CancelOrderModal
+        open={cancellationOrders.length > 0}
+        orders={cancellationOrders}
+        onCancel={() => setCancellationOrders([])}
+        onSuccess={handleCancellationSuccess}
       />
     </>
   )
