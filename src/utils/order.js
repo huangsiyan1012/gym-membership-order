@@ -9,7 +9,12 @@ import dayjs from 'dayjs'
 
 let orderSequence = 0
 
-// 仅对 1 到 10 的整数年限计算费用，非法输入返回 0。
+/**
+ * 计算单次续卡费用。
+ *
+ * 年限必须为 1 到 10 的整数；少于 5 年按原价，达到 5 年按 8 折。
+ * 非法输入返回 0，实际表单仍需先完成校验。
+ */
 export function calculateRenewalFee(years) {
   const normalizedYears = Number(years)
   const isValidYears =
@@ -30,7 +35,12 @@ export function calculateRenewalFee(years) {
   return Number(finalFee.toFixed(2))
 }
 
-// 毫秒时间戳加自增序号，避免同一毫秒内连续创建订单时订单号重复。
+/**
+ * 生成模拟订单号。
+ *
+ * 使用毫秒时间戳和模块内自增序号，降低快速连续创建时订单号冲突的概率。
+ * 页面刷新后序号会重置，这符合当前内存模拟数据的生命周期。
+ */
 export function generateOrderNo(date = new Date()) {
   const timestamp = dayjs(date).format('YYYYMMDDHHmmssSSS')
   orderSequence = (orderSequence + 1) % 1000

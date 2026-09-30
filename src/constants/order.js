@@ -1,4 +1,8 @@
-// 订单状态的完整生命周期。
+/**
+ * 订单状态枚举。
+ *
+ * 所有接口、筛选、写操作和页面展示都只能使用这里的值，避免出现字符串拼写不一致。
+ */
 export const ORDER_STATUS = Object.freeze({
   PENDING_REVIEW: 'PENDING_REVIEW',
   PENDING_CARD: 'PENDING_CARD',
@@ -8,7 +12,7 @@ export const ORDER_STATUS = Object.freeze({
   CANCELLED: 'CANCELLED',
 })
 
-// 状态展示名称集中维护，避免页面和接口层出现不一致文案。
+// 状态到中文文案的映射，页面不直接硬编码状态名称。
 export const ORDER_STATUS_LABELS = Object.freeze({
   [ORDER_STATUS.PENDING_REVIEW]: '待审核',
   [ORDER_STATUS.PENDING_CARD]: '待制卡',
@@ -18,7 +22,7 @@ export const ORDER_STATUS_LABELS = Object.freeze({
   [ORDER_STATUS.CANCELLED]: '已取消',
 })
 
-// antd Tag 颜色与状态一一对应，供列表页统一展示。
+// 状态到 antd Tag 颜色的映射，保证列表页状态展示一致。
 export const ORDER_STATUS_TAG_COLORS = Object.freeze({
   [ORDER_STATUS.PENDING_REVIEW]: 'processing',
   [ORDER_STATUS.PENDING_CARD]: 'cyan',
@@ -28,14 +32,18 @@ export const ORDER_STATUS_TAG_COLORS = Object.freeze({
   [ORDER_STATUS.CANCELLED]: 'default',
 })
 
-// “进行中”是列表页筛选分组，而非独立订单状态。
+// “进行中”是列表页筛选分组，并非独立订单状态，包含待审核、待制卡、待寄卡。
 export const IN_PROGRESS_ORDER_STATUSES = Object.freeze([
   ORDER_STATUS.PENDING_REVIEW,
   ORDER_STATUS.PENDING_CARD,
   ORDER_STATUS.PENDING_SHIP,
 ])
 
-// Tab 的 statuses 为空表示不限制状态，否则按集合进行筛选。
+/**
+ * 列表页状态 Tab 配置。
+ *
+ * statuses 为 null 时查询全部状态；否则查询时按数组中的状态集合过滤。
+ */
 export const ORDER_STATUS_TABS = Object.freeze([
   {
     key: 'ALL',
@@ -64,12 +72,16 @@ export const ORDER_STATUS_TABS = Object.freeze([
   },
 ])
 
-// 对未知状态保留原始值，避免接口异常数据导致页面显示为空。
+/**
+ * 获取状态中文文案。
+ *
+ * 已知状态返回配置文案；未知状态回退为接口原始值，便于定位异常数据。
+ */
 export function getStatusLabel(status) {
   return ORDER_STATUS_LABELS[status] ?? status ?? '-'
 }
 
-// 未定义状态统一使用 antd 默认 Tag 颜色。
+// 获取状态对应的 antd Tag 颜色，未知状态使用 default 兜底。
 export function getStatusColor(status) {
   return ORDER_STATUS_TAG_COLORS[status] ?? 'default'
 }
