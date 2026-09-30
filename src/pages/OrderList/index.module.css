@@ -5,3 +5,16 @@
 .error {
   margin-bottom: 16px;
 }
+
+.actionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.selectionCount {
+  color: #667085;
+  white-space: nowrap;
+}
