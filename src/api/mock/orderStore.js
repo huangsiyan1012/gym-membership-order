@@ -1,4 +1,9 @@
 import { createInitialOrders } from '@/api/mock/orders'
+import { ORDER_STATUS } from '@/constants/order'
+import { MAX_PURCHASE_YEARS, MIN_PURCHASE_YEARS, ORDER_PRICE_PER_YEAR } from '@/constants/pricing'
+import { generateOrderNo } from '@/utils/order'
+import { isValidMemberName, isValidPhone } from '@/utils/validators'
+import dayjs from 'dayjs'
 
 /**
  * 模拟订单仓储。
@@ -7,6 +12,7 @@ import { createInitialOrders } from '@/api/mock/orders'
  * 模块，因此数据会恢复为初始状态。
  */
 let orderStore = createInitialOrders()
+let createdOrderSequence = 0
 
 // 返回对象副本，避免调用方直接修改仓储中的订单数据。
 function cloneOrder(order) {
@@ -85,6 +91,70 @@ export function queryOrders({
     page: normalizedPage,
     pageSize: normalizedPageSize,
   }
+}
+
+// 生成仅用于前端模拟数据的内部订单 ID，避免与新订单创建时间冲突。
+function createOrderId() {
+  createdOrderSequence += 1
+
+  return `mock-order-created-${Date.now()}-${createdOrderSequence}`
+}
+
+// 校验新建订单参数，错误信息可直接用于模拟接口响应和页面提示。
+function validateCreateOrderPayload({ memberName, phone, purchaseYears, remark }) {
+  if (!isValidMemberName(memberName)) {
+    throw new Error('会员姓名需为 2 到 30 个字符')
+  }
+
+  if (!isValidPhone(phone)) {
+    throw new Error('请输入正确的手机号')
+  }
+
+  const normalizedYears = Number(purchaseYears)
+
+  if (
+    !Number.isInteger(normalizedYears) ||
+    normalizedYears < MIN_PURCHASE_YEARS ||
+    normalizedYears > MAX_PURCHASE_YEARS
+  ) {
+    throw new Error('购卡年限需为 1 到 10 的整数')
+  }
+
+  if (typeof remark === 'string' && remark.length > 200) {
+    throw new Error('备注不能超过 200 个字符')
+  }
+
+  return normalizedYears
+}
+
+/**
+ * 新建订单。
+ *
+ * 订单金额由模拟接口按购卡年限重新计算，不信任客户端传入金额。新订单固定进入
+ * 待审核状态，并写入内存仓储头部，后续列表查询可以立即读取。
+ */
+export function createOrder(payload) {
+  const purchaseYears = validateCreateOrderPayload(payload)
+  const createdAt = dayjs().format()
+  const order = {
+    id: createOrderId(),
+    orderNo: generateOrderNo(createdAt),
+    memberName: payload.memberName.trim(),
+    phone: payload.phone.trim(),
+    purchaseYears,
+    orderAmount: purchaseYears * ORDER_PRICE_PER_YEAR,
+    status: ORDER_STATUS.PENDING_REVIEW,
+    createdAt,
+    updatedAt: createdAt,
+    remark: typeof payload.remark === 'string' ? payload.remark.trim() : '',
+    lastRenewalYears: null,
+    lastRenewalFee: null,
+    renewedAt: null,
+  }
+
+  orderStore.unshift(order)
+
+  return cloneOrder(order)
 }
 
 /**
