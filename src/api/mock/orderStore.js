@@ -1,7 +1,7 @@
 import { createInitialOrders } from '@/api/mock/orders'
 import { ORDER_STATUS } from '@/constants/order'
 import { MAX_PURCHASE_YEARS, MIN_PURCHASE_YEARS, ORDER_PRICE_PER_YEAR } from '@/constants/pricing'
-import { generateOrderNo } from '@/utils/order'
+import { calculateRenewalFee, generateOrderNo } from '@/utils/order'
 import { isValidMemberName, isValidPhone } from '@/utils/validators'
 import dayjs from 'dayjs'
 
@@ -100,6 +100,33 @@ function createOrderId() {
   return `mock-order-created-${Date.now()}-${createdOrderSequence}`
 }
 
+// 统一校验订单号数组，并去除重复订单号，保证批量操作按唯一集合执行。
+function normalizeOrderNos(orderNos) {
+  if (!Array.isArray(orderNos)) {
+    throw new Error('请选择需要操作的订单')
+  }
+
+  const normalizedOrderNos = [...new Set(orderNos.filter(Boolean))]
+
+  if (normalizedOrderNos.length === 0) {
+    throw new Error('请选择需要操作的订单')
+  }
+
+  return normalizedOrderNos
+}
+
+// 查找批量操作目标；存在无效订单号时直接报错，避免部分更新。
+function findOrdersByNos(orderNos) {
+  const orderMap = new Map(orderStore.map((order) => [order.orderNo, order]))
+  const missingOrderNos = orderNos.filter((orderNo) => !orderMap.has(orderNo))
+
+  if (missingOrderNos.length > 0) {
+    throw new Error(`以下订单不存在：${missingOrderNos.join('、')}`)
+  }
+
+  return orderNos.map((orderNo) => orderMap.get(orderNo))
+}
+
 // 校验新建订单参数，错误信息可直接用于模拟接口响应和页面提示。
 function validateCreateOrderPayload({ memberName, phone, purchaseYears, remark }) {
   if (!isValidMemberName(memberName)) {
@@ -155,6 +182,76 @@ export function createOrder(payload) {
   orderStore.unshift(order)
 
   return cloneOrder(order)
+}
+
+/**
+ * 批量续卡。
+ *
+ * 只有已到期订单可以续卡。所有目标订单校验通过后才统一更新，避免批量操作出现
+ * 部分成功；续卡后购卡年限累加，状态回到待审核。
+ */
+export function renewOrders({ orderNos, renewalYears }) {
+  const normalizedOrderNos = normalizeOrderNos(orderNos)
+  const normalizedYears = Number(renewalYears)
+
+  if (
+    !Number.isInteger(normalizedYears) ||
+    normalizedYears < MIN_PURCHASE_YEARS ||
+    normalizedYears > MAX_PURCHASE_YEARS
+  ) {
+    throw new Error('续卡年限需为 1 到 10 的整数')
+  }
+
+  const targetOrders = findOrdersByNos(normalizedOrderNos)
+  const invalidOrderNos = targetOrders
+    .filter((order) => order.status !== ORDER_STATUS.EXPIRED)
+    .map((order) => order.orderNo)
+
+  if (invalidOrderNos.length > 0) {
+    throw new Error(`以下订单不满足续卡条件：${invalidOrderNos.join('、')}`)
+  }
+
+  const renewedAt = dayjs().format()
+  const renewalFee = calculateRenewalFee(normalizedYears)
+
+  targetOrders.forEach((order) => {
+    order.purchaseYears += normalizedYears
+    order.status = ORDER_STATUS.PENDING_REVIEW
+    order.lastRenewalYears = normalizedYears
+    order.lastRenewalFee = renewalFee
+    order.renewedAt = renewedAt
+    order.updatedAt = renewedAt
+  })
+
+  return targetOrders.map(cloneOrder)
+}
+
+/**
+ * 批量撤单。
+ *
+ * 只有待制卡和待寄卡订单可以撤销。所有订单先完成状态校验，再统一更新状态，
+ * 避免出现部分订单已撤销、部分订单仍保留原状态。
+ */
+export function cancelOrders({ orderNos }) {
+  const normalizedOrderNos = normalizeOrderNos(orderNos)
+  const targetOrders = findOrdersByNos(normalizedOrderNos)
+  const cancellableStatuses = [ORDER_STATUS.PENDING_CARD, ORDER_STATUS.PENDING_SHIP]
+  const invalidOrderNos = targetOrders
+    .filter((order) => !cancellableStatuses.includes(order.status))
+    .map((order) => order.orderNo)
+
+  if (invalidOrderNos.length > 0) {
+    throw new Error(`以下订单不满足撤单条件：${invalidOrderNos.join('、')}`)
+  }
+
+  const updatedAt = dayjs().format()
+
+  targetOrders.forEach((order) => {
+    order.status = ORDER_STATUS.CANCELLED
+    order.updatedAt = updatedAt
+  })
+
+  return targetOrders.map(cloneOrder)
 }
 
 /**
