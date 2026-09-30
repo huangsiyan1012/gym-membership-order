@@ -8,19 +8,19 @@
 
 ## 技术栈
 
-| 类别 | 技术 |
-| --- | --- |
-| 框架 | React 18 |
-| 构建工具 | Vite |
-| 路由 | react-router v7 |
-| UI 组件库 | Ant Design v5 |
-| HTTP 请求 | axios |
-| 全局状态 | zustand |
-| 日期处理 | dayjs |
-| Mock 接口 | axios-mock-adapter |
-| 语言 | JavaScript |
-| 样式 | CSS Modules 和全局 CSS |
-| 工程化 | ESLint、Prettier |
+| 类别      | 技术                   |
+| --------- | ---------------------- |
+| 框架      | React 18               |
+| 构建工具  | Vite                   |
+| 路由      | react-router v7        |
+| UI 组件库 | Ant Design v5          |
+| HTTP 请求 | axios                  |
+| 全局状态  | zustand                |
+| 日期处理  | dayjs                  |
+| Mock 接口 | axios-mock-adapter     |
+| 语言      | JavaScript             |
+| 样式      | CSS Modules 和全局 CSS |
+| 工程化    | ESLint、Prettier       |
 
 ## 环境要求
 
@@ -109,13 +109,13 @@ VITE_API_BASE_URL=/api
 
 ## 路由说明
 
-| 路径 | 页面 | 访问要求 |
-| --- | --- | --- |
-| `/login` | 登录页 | 游客可访问 |
-| `/` | 重定向到 `/orders` | 登录后访问 |
-| `/orders` | 订单列表页 | 登录后访问 |
-| `/orders/new` | 新建订单页 | 登录后访问 |
-| `*` | 404 页面 | 公开 |
+| 路径          | 页面               | 访问要求   |
+| ------------- | ------------------ | ---------- |
+| `/login`      | 登录页             | 游客可访问 |
+| `/`           | 重定向到 `/orders` | 登录后访问 |
+| `/orders`     | 订单列表页         | 登录后访问 |
+| `/orders/new` | 新建订单页         | 登录后访问 |
+| `*`           | 404 页面           | 公开       |
 
 ## 登录使用说明
 
@@ -138,14 +138,14 @@ gym_orders_username
 
 ## 订单状态
 
-| 状态 | 中文名称 | 说明 |
-| --- | --- | --- |
-| `PENDING_REVIEW` | 待审核 | 订单进入审核流程 |
-| `PENDING_CARD` | 待制卡 | 等待制卡 |
-| `PENDING_SHIP` | 待寄卡 | 等待寄送 |
-| `COMPLETED` | 已完成 | 订单流程完成 |
-| `EXPIRED` | 已到期 | 到期未续费 |
-| `CANCELLED` | 已取消 | 客户撤单 |
+| 状态             | 中文名称 | 说明             |
+| ---------------- | -------- | ---------------- |
+| `PENDING_REVIEW` | 待审核   | 订单进入审核流程 |
+| `PENDING_CARD`   | 待制卡   | 等待制卡         |
+| `PENDING_SHIP`   | 待寄卡   | 等待寄送         |
+| `COMPLETED`      | 已完成   | 订单流程完成     |
+| `EXPIRED`        | 已到期   | 到期未续费       |
+| `CANCELLED`      | 已取消   | 客户撤单         |
 
 状态流转：
 
@@ -496,21 +496,21 @@ CSV 格式：
 
 ## 开发工具和使用环节
 
-| 工具 | 使用环节 |
-| --- | --- |
-| Codex | 代码生成、重构、注释修订、接口验证和文档整理 |
-| Vite | 项目初始化、开发服务器和生产构建 |
-| npm | 依赖安装和脚本执行 |
-| React | 页面、组件和 Hook 实现 |
-| react-router v7 | 路由、守卫和嵌套布局 |
-| Ant Design v5 | 表单、表格、弹窗、菜单和反馈组件 |
-| axios | 请求封装和拦截器 |
-| axios-mock-adapter | Mock API 拦截和响应 |
-| zustand | 登录状态管理 |
-| dayjs | 日期格式化和语言配置 |
-| ESLint | 静态代码检查 |
-| Prettier | 代码格式化 |
-| PowerShell | Windows 环境下的命令执行和验证脚本 |
+| 工具               | 使用环节                                     |
+| ------------------ | -------------------------------------------- |
+| Codex              | 代码生成、重构、注释修订、接口验证和文档整理 |
+| Vite               | 项目初始化、开发服务器和生产构建             |
+| npm                | 依赖安装和脚本执行                           |
+| React              | 页面、组件和 Hook 实现                       |
+| react-router v7    | 路由、守卫和嵌套布局                         |
+| Ant Design v5      | 表单、表格、弹窗、菜单和反馈组件             |
+| axios              | 请求封装和拦截器                             |
+| axios-mock-adapter | Mock API 拦截和响应                          |
+| zustand            | 登录状态管理                                 |
+| dayjs              | 日期格式化和语言配置                         |
+| ESLint             | 静态代码检查                                 |
+| Prettier           | 代码格式化                                   |
+| PowerShell         | Windows 环境下的命令执行和验证脚本           |
 
 ## 已知限制
 
@@ -522,26 +522,3 @@ CSV 格式：
 - CSV 导出没有后端审计记录。
 - 浏览器禁用 localStorage 时，刷新后会丢失登录态。
 - 当前未实现订单详情、审批和订单编辑。
-
-## 后续改进方向
-
-1. 接入 Vitest、Testing Library 和 Playwright。
-2. 按路由进行懒加载，拆分 antd 和业务页面。
-3. 增加后端接口环境和真实鉴权。
-4. 增加权限模型和导出审计。
-5. 增加订单详情、状态流转记录和续卡历史。
-6. 增加服务端持久化和并发版本控制。
-7. 增加移动端和低分辨率适配。
-8. 增加可访问性检查和视觉回归测试。
-
-## 提交说明
-
-提交前：
-
-1. 运行 `npm run lint`。
-2. 运行 `npm run format:check`。
-3. 运行 `npm run build`。
-4. 确认未提交 `node_modules` 和 `dist`。
-5. 确认 Git 提交历史完整。
-6. 将仓库设置为公开。
-7. 按笔试要求发送仓库地址和邮件标题。
